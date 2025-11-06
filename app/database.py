@@ -54,6 +54,7 @@ def init_db():
     """)
     
     regras_padrao = [
+        # Regras existentes de penalidade
         ('falta', 'elimina', 100, None, 'Perde todo o bônus'),
         ('atestado', 'limite', 100, 2, 'Mais de 2 atestados perde o bônus'),
         ('advertencia', 'elimina', 100, None, 'Perde todo o bônus'),
@@ -63,10 +64,14 @@ def init_db():
         ('reclamacao_qualidade', 'percentual', 10, None, 'Reduz 10% do bônus'),
         ('esqueceu_ponto', 'percentual', 10, None, 'Reduz 10% do bônus'),
         ('avaria_menor', 'percentual', 10, None, 'Reduz 10% do bônus'),
-        ('avaria_grave', 'percentual', 20, None, 'Reduz 20% do bônus')
+        ('avaria_grave', 'percentual', 20, None, 'Reduz 20% do bônus'),
+        
+        # NOVAS REGRAS DE SUPERMETA
+        ('supermeta_110', 'bonus', 10, 1, 'Bônus de 10% por supermeta 110%'),
+        ('supermeta_120', 'bonus', 20, 1, 'Bônus de 20% por supermeta 120%')
     ]
     
-    for regra in regras_padrao:
+    for regra in regras_padrao: 
         cursor.execute("""
             INSERT INTO regras_bonus (tipo, categoria, desconto, limite, descricao)
             VALUES (%s, %s, %s, %s, %s)

@@ -44,3 +44,24 @@ th { background: #f8f9fa; font-weight: 600; color: #667eea; }
 .form-actions { display: flex; gap: 10px; margin-top: 20px; }
 small { color: #666; font-size: 12px; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea !important; }
+.bonus-positive {
+    color: #51cf66;
+    font-weight: bold;
+}
+.bonus-negative {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+.bonus-neutral {
+    color: #666;
+}
+.badge-bonus {
+    background: #d3f9d8;
+    color: #2f9e44;
+    border: 1px solid #b2f2bb;
+}
+/* Destaque para supermetas na lista */
+.supermeta-item {
+    background: linear-gradient(135deg, #d3f9d8 0%, #b2f2bb 100%);
+    border-left: 4px solid #51cf66;
+}

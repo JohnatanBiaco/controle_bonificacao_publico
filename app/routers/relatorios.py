@@ -76,15 +76,20 @@ def calcular_bonus_funcionario(funcionario_id: str, data_inicio: str, data_fim: 
     bonus_final = 100.0
     detalhes = []
     perdeu_bonus = False
+    bonus_positivos = 0.0
 
-    # Conta atestados (que não anulam outras ocorrências)
-    qtd_atestados = ocorrencias_efetivas.count('atestado')
-
-    ocorrencias_processadas = set()
+    # Contadores automáticos para todas as regras com limite
+    contadores = {}
     for ocorrencia in ocorrencias_efetivas:
-        if ocorrencia in ocorrencias_processadas and regras.get(ocorrencia, {}).get('categoria') != 'percentual':
-            continue
+        contadores[ocorrencia] = contadores.get(ocorrencia, 0) + 1
 
+    # Processa cada tipo de ocorrência apenas uma vez
+    tipos_processados = set()
+    
+    for ocorrencia in ocorrencias_efetivas:
+        if ocorrencia in tipos_processados:
+            continue
+            
         regra = regras.get(ocorrencia)
         if not regra:
             continue
@@ -92,27 +97,58 @@ def calcular_bonus_funcionario(funcionario_id: str, data_inicio: str, data_fim: 
         categoria = regra['categoria']
         desconto = regra['desconto']
         limite = regra.get('limite')
+        quantidade = contadores.get(ocorrencia, 0)
 
         if categoria == 'elimina':
             perdeu_bonus = True
             detalhes.append({"tipo": ocorrencia, "impacto": "Elimina bônus", "desconto": 100})
         elif categoria == 'limite' and ocorrencia == 'atestado':
-            if qtd_atestados > limite:
+            if quantidade > limite:
                 perdeu_bonus = True
                 detalhes.append({
                     "tipo": ocorrencia,
-                    "impacto": f"Excedeu limite de {limite} atestados ({qtd_atestados})",
+                    "impacto": f"Excedeu limite de {limite} atestados ({quantidade})",
                     "desconto": 100
                 })
         elif categoria == 'percentual' and not perdeu_bonus:
-            bonus_final -= desconto
-            detalhes.append({"tipo": ocorrencia, "impacto": f"Reduz {desconto}%", "desconto": desconto})
+            # Aplica desconto para cada ocorrência (sem limite)
+            total_desconto = desconto * quantidade
+            bonus_final -= total_desconto
+            detalhes.append({
+                "tipo": ocorrencia, 
+                "impacto": f"Reduz {total_desconto}% ({quantidade} ocorrência(s))", 
+                "desconto": total_desconto
+            })
+        elif categoria == 'bonus' and not perdeu_bonus:
+            # Verifica limite para supermetas
+            if limite is not None:
+                # Aplica apenas até o limite permitido
+                quantidade_aplicavel = min(quantidade, limite)
+                bonus_aplicavel = desconto * quantidade_aplicavel
+                if quantidade_aplicavel > 0:
+                    bonus_positivos += bonus_aplicavel
+                    detalhes.append({
+                        "tipo": ocorrencia, 
+                        "impacto": f"Adiciona {bonus_aplicavel}% ({quantidade_aplicavel} de {quantidade} dentro do limite)", 
+                        "desconto": bonus_aplicavel
+                    })
+            else:
+                # Sem limite, aplica todas as ocorrências
+                bonus_aplicavel = desconto * quantidade
+                bonus_positivos += bonus_aplicavel
+                detalhes.append({
+                    "tipo": ocorrencia, 
+                    "impacto": f"Adiciona {bonus_aplicavel}% ({quantidade} ocorrência(s))", 
+                    "desconto": bonus_aplicavel
+                })
 
-        ocorrencias_processadas.add(ocorrencia)
+        tipos_processados.add(ocorrencia)
 
     if perdeu_bonus:
         bonus_final = 0
     else:
+        # Aplica bônus positivos (não pode ultrapassar 200%)
+        bonus_final = min(200, bonus_final + bonus_positivos)
         bonus_final = max(0, bonus_final)
 
     return {
@@ -121,9 +157,10 @@ def calcular_bonus_funcionario(funcionario_id: str, data_inicio: str, data_fim: 
         "bonus_percentual": round(bonus_final, 2),
         "recebe_bonus": bonus_final > 0,
         "total_ocorrencias": len(ocorrencias_efetivas),
-        "atestados": qtd_atestados,
+        "atestados": contadores.get('atestado', 0),
         "detalhes": detalhes,
-        "ocorrencias_anuladas": len(ocorrencias_anuladas)
+        "ocorrencias_anuladas": len(ocorrencias_anuladas),
+        "bonus_positivos": round(bonus_positivos, 2)
     }
 
 

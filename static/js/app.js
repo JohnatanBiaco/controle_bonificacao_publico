@@ -408,9 +408,14 @@ async function gerarRelatorio(e) {
                 <td>${f.nome}</td>
                 <td>${f.total_ocorrencias}</td>
                 <td>${f.atestados}/2</td>
-                <td><strong>${f.bonus_percentual}%</strong></td>
-                <td>${status}</td>
-            </tr>`;
+                <td>
+                <strong style="color: ${f.bonus_percentual > 100 ? '#51cf66' : f.bonus_percentual === 100 ? '#666' : '#ff6b6b'}">
+                    ${f.bonus_percentual}%
+                </strong>
+                ${f.bonus_positivos > 0 ? `<br><small style="color: #51cf66">+${f.bonus_positivos}% bônus</small>` : ''}
+            </td>
+            <td>${status}</td>
+        </tr>`;
         });
         
         html += '</tbody></table>';
@@ -582,8 +587,21 @@ async function carregarTiposOcorrencia() {
         const select = document.getElementById('ocorrenciaTipo');
         select.innerHTML = '<option value="">Selecione...</option>';
         
+        // Ordenar: primeiro bônus, depois neutros, depois penalidades
+        const categoriasOrdem = ['bonus', 'limite', 'percentual', 'elimina'];
+        
+        regras.sort((a, b) => {
+            return categoriasOrdem.indexOf(a.categoria) - categoriasOrdem.indexOf(b.categoria);
+        });
+        
         regras.forEach(r => {
-            select.innerHTML += `<option value="${r.tipo}">${r.tipo.replace(/_/g, ' ')} - ${r.descricao}</option>`;
+            let emoji = '';
+            if (r.categoria === 'bonus') emoji = '🎯 ';
+            else if (r.categoria === 'elimina') emoji = '❌ ';
+            else if (r.tipo === 'atestado') emoji = '🏥 ';
+            else emoji = '⚠️ ';
+            
+            select.innerHTML += `<option value="${r.tipo}">${emoji}${r.tipo.replace(/_/g, ' ')} - ${r.descricao}</option>`;
         });
     } catch (error) {
         console.error('Erro ao carregar tipos:', error);
