@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Bonificação</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Sistema de Bonificação</h1>
+        
+        <div class="cards" id="dashboardCards">
+            <div class="card stat-card">
+                <div class="stat-number" id="totalFuncionarios">-</div>
+                <div class="stat-label">Funcionários Ativos</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-number" id="ocorrenciasMes">-</div>
+                <div class="stat-label">Ocorrências este Mês</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-number" id="tipoMaisComum">-</div>
+                <div class="stat-label">Ocorrência Mais Comum</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="showTab('funcionarios')">👥 Funcionários</button>
+                <button class="tab-btn" onclick="showTab('ocorrencias')">📋 Ocorrências</button>
+                <button class="tab-btn" onclick="showTab('relatorios')">📊 Relatórios</button>
+                <button class="tab-btn" onclick="showTab('regras')">⚙️ Regras</button>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <!-- TAB FUNCIONÁRIOS -->
+            <div id="tab-funcionarios" class="tab-content active">
+                <h2>Cadastrar Funcionário</h2>
+                <form id="formFuncionario" onsubmit="cadastrarFuncionario(event)">
+                    <div class="form-group">
+                        <label>ID*</label>
+                        <input type="text" id="id" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nome*</label>
+                        <input type="text" id="nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Função</label>
+                        <input type="text" id="funcao">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                </form>
+
+                <h2 style="margin-top: 30px;">Lista de Funcionários</h2>
+                <div id="listaFuncionarios" class="loading">Carregando...</div>
+            </div>
+
+            <!-- TAB OCORRÊNCIAS -->
+            <div id="tab-ocorrencias" class="tab-content">
+                <h2>Registrar Ocorrência</h2>
+                <form id="formOcorrencia" onsubmit="registrarOcorrencia(event)">
+                    <div class="form-group">
+                        <label>Funcionário*</label>
+                        <select id="funcionario_id" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Ocorrência*</label>
+                        <select id="ocorrenciaTipo" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data*</label>
+                        <input type="date" id="ocorrenciaData" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Observação</label>
+                        <textarea id="ocorrenciaObs"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Anular Ocorrência (apenas para atestados)</label>
+                        <select id="ocorrenciaAnula">
+                            <option value="">Não anular nenhuma ocorrência</option>
+                        </select>
+                        <small style="color: #666;">Selecione uma ocorrência de falta, atraso ou saída antecipada para anular com este atestado</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Registrar</button>
+                </form>
+
+                <h2 style="margin-top: 30px;">Ocorrências Recentes</h2>
+                <div id="listaOcorrencias" class="loading">Carregando...</div>
+            </div>
+
+            <!-- TAB RELATÓRIOS -->
+            <div id="tab-relatorios" class="tab-content">
+                <h2>Gerar Relatório de Bonificação</h2>
+                <form id="formRelatorio" onsubmit="gerarRelatorio(event)">
+                    <div class="form-group">
+                        <label>Data Início*</label>
+                        <input type="date" id="relDataInicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data Fim*</label>
+                        <input type="date" id="relDataFim" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Gerar Relatório</button>
+                </form>
+
+                <div id="resultadoRelatorio" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- TAB REGRAS -->
+            <div id="tab-regras" class="tab-content">
+                <h2>Regras de Bonificação</h2>
+                <div id="listaRegras" class="loading">Carregando...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
