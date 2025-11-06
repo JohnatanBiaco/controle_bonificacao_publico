@@ -90,29 +90,148 @@ async function carregarFuncionarios() {
             return;
         }
 
-        let html = '<table><thead><tr><th>ID</th><th>Nome</th><th>Função</th></tr></thead><tbody>';
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Função</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
         
         funcionarios.forEach(f => {
-            html += `<tr>
-                <td>${f.id}</td>
-                <td>${f.nome}</td>
-                <td>${f.funcao || '-'}</td>
-            </tr>`;
+            const status = f.ativo 
+                ? '<span class="badge badge-success">Ativo</span>'
+                : '<span class="badge badge-danger">Inativo</span>';
+                
+            html += `
+                <tr>
+                    <td>${f.id}</td>
+                    <td>${f.nome}</td>
+                    <td>${f.funcao || '-'}</td>
+                    <td>${status}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary btn-sm" onclick="editarFuncionario('${f.id}')">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="excluirFuncionario('${f.id}')">Excluir</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
         });
         
         html += '</tbody></table>';
         document.getElementById('listaFuncionarios').innerHTML = html;
 
-        // Atualiza select de ocorrências
+        // Atualiza select de ocorrências apenas com funcionários ativos
         const select = document.getElementById('funcionario_id');
         select.innerHTML = '<option value="">Selecione...</option>';
-        funcionarios.forEach(f => {
+        funcionarios.filter(f => f.ativo).forEach(f => {
             select.innerHTML += `<option value="${f.id}">${f.nome} (${f.id})</option>`;
         });
 
     } catch (error) {
         document.getElementById('listaFuncionarios').innerHTML = 
             '<p style="color:red;">Erro ao carregar funcionários</p>';
+    }
+}
+
+async function editarFuncionario(funcionarioId) {
+    try {
+        const res = await fetch(`/api/funcionarios/${funcionarioId}`);
+        const funcionario = await res.json();
+        
+        // Preenche o formulário com os dados atuais
+        document.getElementById('id').value = funcionario.id;
+        document.getElementById('nome').value = funcionario.nome;
+        document.getElementById('funcao').value = funcionario.funcao || '';
+        
+        // Altera o botão para modo edição
+        const form = document.getElementById('formFuncionario');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Atualizar Funcionário';
+        submitBtn.onclick = (e) => atualizarFuncionario(e, funcionarioId);
+        
+        // Adiciona botão cancelar
+        if (!document.getElementById('cancelEditBtn')) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.id = 'cancelEditBtn';
+            cancelBtn.className = 'btn btn-danger';
+            cancelBtn.textContent = 'Cancelar';
+            cancelBtn.onclick = cancelarEdicao;
+            form.appendChild(cancelBtn);
+        }
+        
+        mostrarAlerta('Modo edição ativado. Preencha os campos e clique em "Atualizar Funcionário"', 'success');
+        
+    } catch (error) {
+        mostrarAlerta('Erro ao carregar dados do funcionário', 'error');
+    }
+}
+
+async function atualizarFuncionario(e, funcionarioId) {
+    e.preventDefault();
+    
+    const dados = {
+        nome: document.getElementById('nome').value,
+        funcao: document.getElementById('funcao').value
+    };
+
+    try {
+        const res = await fetch(`/api/funcionarios/${funcionarioId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(dados)
+        });
+
+        if (res.ok) {
+            mostrarAlerta('Funcionário atualizado com sucesso!');
+            cancelarEdicao();
+            carregarFuncionarios();
+        } else {
+            const erro = await res.json();
+            mostrarAlerta(erro.detail, 'error');
+        }
+    } catch (error) {
+        mostrarAlerta('Erro ao atualizar funcionário', 'error');
+    }
+}
+
+function cancelarEdicao() {
+    document.getElementById('formFuncionario').reset();
+    const submitBtn = document.querySelector('#formFuncionario button[type="submit"]');
+    submitBtn.textContent = 'Cadastrar';
+    submitBtn.onclick = cadastrarFuncionario;
+    
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) cancelBtn.remove();
+}
+
+async function excluirFuncionario(funcionarioId) {
+    if (!confirm('Tem certeza que deseja excluir este funcionário?\n\nSe o funcionário tiver ocorrências registradas, ele será apenas desativado.')) return;
+
+    try {
+        const res = await fetch(`/api/funcionarios/${funcionarioId}`, {
+            method: 'DELETE'
+        });
+        
+        if (res.ok) {
+            const resultado = await res.json();
+            mostrarAlerta(resultado.message);
+            carregarFuncionarios();
+            carregarDashboard();
+        } else {
+            const erro = await res.json();
+            mostrarAlerta(erro.detail, 'error');
+        }
+    } catch (error) {
+        mostrarAlerta('Erro ao excluir funcionário', 'error');
     }
 }
 
@@ -213,7 +332,11 @@ async function carregarOcorrencias() {
                 <td>${o.tipo.replace(/_/g, ' ')}</td>
                 <td>${o.observacao || '-'}</td>
                 <td>${anulacaoInfo}</td>
-                <td><button class="btn btn-danger" style="padding:6px 12px;" onclick="deletarOcorrencia(${o.id})">Deletar</button></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-danger btn-sm" onclick="deletarOcorrencia(${o.id})">Deletar</button>
+                    </div>
+                </td>
             </tr>`;
         });
         
@@ -304,7 +427,54 @@ async function carregarRegras() {
         const res = await fetch('/api/regras');
         const regras = await res.json();
         
-        let html = '<table><thead><tr><th>Tipo</th><th>Categoria</th><th>Impacto</th><th>Descrição</th></tr></thead><tbody>';
+        let html = `
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-success" onclick="mostrarFormRegra()">➕ Adicionar Nova Regra</button>
+            </div>
+            <div id="formNovaRegra" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3>Nova Regra de Bonificação</h3>
+                <form id="formRegra" onsubmit="criarRegra(event)">
+                    <div class="form-group">
+                        <label>Tipo*</label>
+                        <input type="text" id="regraTipo" required placeholder="Ex: nova_ocorrencia">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria*</label>
+                        <select id="regraCategoria" required>
+                            <option value="">Selecione...</option>
+                            <option value="elimina">Elimina Bônus</option>
+                            <option value="limite">Limite</option>
+                            <option value="percentual">Percentual</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Desconto (%)*</label>
+                        <input type="number" id="regraDesconto" required min="0" max="100" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Limite (apenas para categoria "limite")</label>
+                        <input type="number" id="regraLimite" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea id="regraDescricao" placeholder="Descrição da regra..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Criar Regra</button>
+                    <button type="button" class="btn btn-danger" onclick="ocultarFormRegra()">Cancelar</button>
+                </form>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Categoria</th>
+                        <th>Impacto</th>
+                        <th>Descrição</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
         
         regras.forEach(r => {
             let impacto = '';
@@ -316,12 +486,19 @@ async function carregarRegras() {
                 impacto = `<span class="badge" style="background:#fff3bf;color:#c92a2a;">-${r.desconto}%</span>`;
             }
             
-            html += `<tr>
-                <td><strong>${r.tipo.replace(/_/g, ' ')}</strong></td>
-                <td>${r.categoria}</td>
-                <td>${impacto}</td>
-                <td>${r.descricao}</td>
-            </tr>`;
+            html += `
+                <tr>
+                    <td><strong>${r.tipo.replace(/_/g, ' ')}</strong></td>
+                    <td>${r.categoria}</td>
+                    <td>${impacto}</td>
+                    <td>${r.descricao}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-danger btn-sm" onclick="excluirRegra('${r.tipo}')">Excluir</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
         });
         
         html += '</tbody></table>';
@@ -330,6 +507,69 @@ async function carregarRegras() {
     } catch (error) {
         document.getElementById('listaRegras').innerHTML = 
             '<p style="color:red;">Erro ao carregar regras</p>';
+    }
+}
+
+function mostrarFormRegra() {
+    document.getElementById('formNovaRegra').style.display = 'block';
+}
+
+function ocultarFormRegra() {
+    document.getElementById('formNovaRegra').style.display = 'none';
+    document.getElementById('formRegra').reset();
+}
+
+async function criarRegra(e) {
+    e.preventDefault();
+    
+    const dados = {
+        tipo: document.getElementById('regraTipo').value,
+        categoria: document.getElementById('regraCategoria').value,
+        desconto: parseFloat(document.getElementById('regraDesconto').value),
+        limite: document.getElementById('regraLimite').value ? parseInt(document.getElementById('regraLimite').value) : null,
+        descricao: document.getElementById('regraDescricao').value
+    };
+
+    try {
+        const res = await fetch('/api/regras', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(dados)
+        });
+
+        if (res.ok) {
+            mostrarAlerta('Regra criada com sucesso!');
+            document.getElementById('formRegra').reset();
+            ocultarFormRegra();
+            carregarRegras();
+            carregarTiposOcorrencia(); // Atualiza a lista de tipos
+        } else {
+            const erro = await res.json();
+            mostrarAlerta(erro.detail, 'error');
+        }
+    } catch (error) {
+        mostrarAlerta('Erro ao criar regra', 'error');
+    }
+}
+
+async function excluirRegra(tipoRegra) {
+    if (!confirm(`Tem certeza que deseja excluir a regra "${tipoRegra.replace(/_/g, ' ')}"?`)) return;
+
+    try {
+        const res = await fetch(`/api/regras/${tipoRegra}`, {
+            method: 'DELETE'
+        });
+        
+        if (res.ok) {
+            mostrarAlerta('Regra excluída com sucesso!');
+            carregarRegras();
+            carregarTiposOcorrencia(); // Atualiza a lista de tipos
+        } else {
+            const erro = await res.json();
+            mostrarAlerta(erro.detail, 'error');
+        }
+    } catch (error) {
+        mostrarAlerta('Erro ao excluir regra', 'error');
     }
 }
 

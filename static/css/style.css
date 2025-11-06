@@ -25,6 +25,8 @@ h1 { color: white; text-align: center; margin-bottom: 30px; font-size: 2.5em; te
 .btn-primary:hover { background: #5568d3; }
 .btn-success { background: #51cf66; color: white; }
 .btn-danger { background: #ff6b6b; color: white; }
+.btn-danger:hover { background: #fa5252; }
+.btn-sm { padding: 6px 12px !important; font-size: 14px !important; }
 table { width: 100%; border-collapse: collapse; margin-top: 20px; }
 th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
 th { background: #f8f9fa; font-weight: 600; color: #667eea; }
@@ -35,6 +37,10 @@ th { background: #f8f9fa; font-weight: 600; color: #667eea; }
 .stat-number { font-size: 3em; font-weight: bold; color: #667eea; }
 .stat-label { color: #666; margin-top: 10px; }
 .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-.alert-success { background: #d3f9d8; color: #2f9e44; }
-.alert-error { background: #ffe0e0; color: #c92a2a; }
+.alert-success { background: #d3f9d8; color: #2f9e44; border: 1px solid #b2f2bb; }
+.alert-error { background: #ffe0e0; color: #c92a2a; border: 1px solid #ffa8a8; }
 .loading { text-align: center; padding: 20px; color: #666; }
+.action-buttons { display: flex; gap: 5px; flex-wrap: wrap; }
+.form-actions { display: flex; gap: 10px; margin-top: 20px; }
+small { color: #666; font-size: 12px; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea !important; }

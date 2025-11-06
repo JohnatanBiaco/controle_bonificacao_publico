@@ -4,7 +4,7 @@ from typing import Optional
 class Funcionario(BaseModel):
     id: str  # Matrícula como ID
     nome: str
-    funcao: Optional[str] = None
+    funcao: str
 
 class FuncionarioUpdate(BaseModel):
     nome: Optional[str] = None

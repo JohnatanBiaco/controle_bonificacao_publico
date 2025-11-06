@@ -51,7 +51,9 @@
                         <label>Função</label>
                         <input type="text" id="funcao">
                     </div>
-                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Cadastrar</button>
+                    </div>
                 </form>
 
                 <h2 style="margin-top: 30px;">Lista de Funcionários</h2>
@@ -83,9 +85,11 @@
                         <select id="ocorrenciaAnula">
                             <option value="">Não anular nenhuma ocorrência</option>
                         </select>
-                        <small style="color: #666;">Selecione uma ocorrência de falta, atraso ou saída antecipada para anular com este atestado</small>
+                        <small>Selecione uma ocorrência de falta, atraso ou saída antecipada para anular com este atestado</small>
                     </div>
-                    <button type="submit" class="btn btn-primary">Registrar</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Registrar</button>
+                    </div>
                 </form>
 
                 <h2 style="margin-top: 30px;">Ocorrências Recentes</h2>
@@ -104,7 +108,9 @@
                         <label>Data Fim*</label>
                         <input type="date" id="relDataFim" required>
                     </div>
-                    <button type="submit" class="btn btn-success">Gerar Relatório</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success">Gerar Relatório</button>
+                    </div>
                 </form>
 
                 <div id="resultadoRelatorio" style="margin-top: 20px;"></div>
