@@ -65,3 +65,33 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea
     background: linear-gradient(135deg, #d3f9d8 0%, #b2f2bb 100%);
     border-left: 4px solid #51cf66;
 }
+/* Estilos para as funções */
+.badge-lider {
+    background: #667eea !important;
+    color: white !important;
+}
+
+.badge-operador {
+    background: #51cf66 !important;
+    color: white !important;
+}
+
+.badge-ajudante {
+    background: #ffd43b !important;
+    color: black !important;
+}
+
+/* Melhorar o select */
+select {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    width: 100%;
+}
+
+select:focus {
+    outline: none;
+    border-color: #667eea;
+}

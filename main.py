@@ -21,7 +21,6 @@ else:
 # Adiciona ao path para imports
 sys.path.insert(0, BASE_DIR)
 
-print = lambda *args, **kwargs: __builtins__.print(*args, **kwargs)
 
 # Agora importa as bibliotecas
 from fastapi import FastAPI

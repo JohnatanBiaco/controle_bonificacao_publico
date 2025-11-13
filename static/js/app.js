@@ -53,7 +53,6 @@ async function cadastrarFuncionario(e) {
     e.preventDefault();
     
     const dados = {
-        id: document.getElementById('id').value,
         nome: document.getElementById('nome').value,
         funcao: document.getElementById('funcao').value
     };
@@ -108,17 +107,23 @@ async function carregarFuncionarios() {
             const status = f.ativo 
                 ? '<span class="badge badge-success">Ativo</span>'
                 : '<span class="badge badge-danger">Inativo</span>';
+            
+            const funcaoDisplay = {
+                'LIDER': '<span class="badge badge-lider">Líder</span>',
+                'OPERADOR': '<span class="badge badge-operador">Operador</span>',
+                'AJUDANTE': '<span class="badge badge-ajudante">Ajudante</span>'
+            }[f.funcao] || '<span style="color:#666;">-</span>';
                 
             html += `
                 <tr>
-                    <td>${f.id}</td>
+                    <td>#${f.id}</td>
                     <td>${f.nome}</td>
-                    <td>${f.funcao || '-'}</td>
+                    <td>${funcaoDisplay}</td>
                     <td>${status}</td>
                     <td>
                         <div class="action-buttons">
-                            <button class="btn btn-primary btn-sm" onclick="editarFuncionario('${f.id}')">Editar</button>
-                            <button class="btn btn-danger btn-sm" onclick="excluirFuncionario('${f.id}')">Excluir</button>
+                            <button class="btn btn-primary btn-sm" onclick="editarFuncionario(${f.id})">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="excluirFuncionario(${f.id})">Excluir</button>
                         </div>
                     </td>
                 </tr>
@@ -132,7 +137,8 @@ async function carregarFuncionarios() {
         const select = document.getElementById('funcionario_id');
         select.innerHTML = '<option value="">Selecione...</option>';
         funcionarios.filter(f => f.ativo).forEach(f => {
-            select.innerHTML += `<option value="${f.id}">${f.nome} (${f.id})</option>`;
+            const funcaoInfo = f.funcao ? ` (${f.funcao})` : '';
+            select.innerHTML += `<option value="${f.id}">${f.nome}${funcaoInfo}</option>`;
         });
 
     } catch (error) {
@@ -147,7 +153,6 @@ async function editarFuncionario(funcionarioId) {
         const funcionario = await res.json();
         
         // Preenche o formulário com os dados atuais
-        document.getElementById('id').value = funcionario.id;
         document.getElementById('nome').value = funcionario.nome;
         document.getElementById('funcao').value = funcionario.funcao || '';
         
@@ -269,11 +274,11 @@ async function registrarOcorrencia(e) {
     const anulaOcorrenciaId = document.getElementById('ocorrenciaAnula').value;
     
     const dados = {
-        funcionario_id: document.getElementById('funcionario_id').value,
+        funcionario_id: parseInt(document.getElementById('funcionario_id').value),
         tipo: document.getElementById('ocorrenciaTipo').value,
         data: document.getElementById('ocorrenciaData').value,
         observacao: document.getElementById('ocorrenciaObs').value,
-        anula_ocorrencia_id: anulaOcorrenciaId || null
+        anula_ocorrencia_id: anulaOcorrenciaId ? parseInt(anulaOcorrenciaId) : null
     };
 
     try {
@@ -297,7 +302,13 @@ async function registrarOcorrencia(e) {
             carregarDashboard();
         } else {
             const erro = await res.json();
-            mostrarAlerta(erro.detail, 'error');
+            
+            // Mensagem especial para supermeta duplicada
+            if (erro.detail && erro.detail.includes('supermeta')) {
+                mostrarAlerta('❌ ' + erro.detail, 'error');
+            } else {
+                mostrarAlerta(erro.detail, 'error');
+            }
         }
     } catch (error) {
         mostrarAlerta('Erro ao registrar ocorrência', 'error');
@@ -326,10 +337,25 @@ async function carregarOcorrencias() {
                 anulacaoInfo = `<span style="color: #51cf66;">✓ Anulou ocorrência #${o.anula_ocorrencia_id}</span>`;
             }
             
+            // Formatar o tipo para mostrar emoji e nome amigável
+            let tipoDisplay = o.tipo.replace(/_/g, ' ');
+            let emoji = '';
+            
+            if (o.tipo.startsWith('supermeta')) {
+                emoji = '🎯 ';
+                tipoDisplay = `<strong style="color: #51cf66;">${tipoDisplay}</strong>`;
+            } else if (o.tipo === 'atestado') {
+                emoji = '🏥 ';
+            } else if (['falta', 'advertencia', 'suspensao'].includes(o.tipo)) {
+                emoji = '❌ ';
+            } else {
+                emoji = '⚠️ ';
+            }
+            
             html += `<tr>
                 <td>${o.data.split('-').reverse().join('/')}</td>
-                <td>${o.nome_funcionario}</td>
-                <td>${o.tipo.replace(/_/g, ' ')}</td>
+                <td><strong>${o.nome_funcionario || 'N/A'}</strong></td>
+                <td>${emoji}${tipoDisplay}</td>
                 <td>${o.observacao || '-'}</td>
                 <td>${anulacaoInfo}</td>
                 <td>
@@ -344,6 +370,7 @@ async function carregarOcorrencias() {
         document.getElementById('listaOcorrencias').innerHTML = html;
 
     } catch (error) {
+        console.error('Erro ao carregar ocorrências:', error);
         document.getElementById('listaOcorrencias').innerHTML = 
             '<p style="color:red;">Erro ao carregar ocorrências</p>';
     }
@@ -404,18 +431,18 @@ async function gerarRelatorio(e) {
                 : '<span class="badge badge-danger">✗ Não Recebe</span>';
             
             html += `<tr>
-                <td>${f.funcionario_id}</td>
+                <td>#${f.funcionario_id}</td>
                 <td>${f.nome}</td>
                 <td>${f.total_ocorrencias}</td>
                 <td>${f.atestados}/2</td>
                 <td>
-                <strong style="color: ${f.bonus_percentual > 100 ? '#51cf66' : f.bonus_percentual === 100 ? '#666' : '#ff6b6b'}">
-                    ${f.bonus_percentual}%
-                </strong>
-                ${f.bonus_positivos > 0 ? `<br><small style="color: #51cf66">+${f.bonus_positivos}% bônus</small>` : ''}
-            </td>
-            <td>${status}</td>
-        </tr>`;
+                    <strong style="color: ${f.bonus_percentual > 100 ? '#51cf66' : f.bonus_percentual === 100 ? '#666' : '#ff6b6b'}">
+                        ${f.bonus_percentual}%
+                    </strong>
+                    ${f.bonus_positivos > 0 ? `<br><small style="color: #51cf66">+${f.bonus_positivos}% bônus</small>` : ''}
+                </td>
+                <td>${status}</td>
+            </tr>`;
         });
         
         html += '</tbody></table>';
@@ -450,6 +477,7 @@ async function carregarRegras() {
                             <option value="elimina">Elimina Bônus</option>
                             <option value="limite">Limite</option>
                             <option value="percentual">Percentual</option>
+                            <option value="bonus">Bônus</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -487,6 +515,8 @@ async function carregarRegras() {
                 impacto = '<span class="badge badge-danger">Elimina Bônus</span>';
             } else if (r.categoria === 'limite') {
                 impacto = `<span class="badge badge-danger">Limite: ${r.limite}</span>`;
+            } else if (r.categoria === 'bonus') {
+                impacto = `<span class="badge badge-success">+${r.desconto}% Bônus</span>`;
             } else {
                 impacto = `<span class="badge" style="background:#fff3bf;color:#c92a2a;">-${r.desconto}%</span>`;
             }
@@ -618,7 +648,7 @@ window.onload = function() {
     const selectFuncionario = document.getElementById('funcionario_id');
     if (selectFuncionario) {
         selectFuncionario.addEventListener('change', function() {
-            carregarOcorrenciasPendentes(this.value);
+            carregarOcorrenciasPendentes(parseInt(this.value));
         });
     }
 };
