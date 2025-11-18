@@ -59,30 +59,6 @@ Tipos já configurados:
 
 ---
 
-## 📁 Estrutura do projeto
-
-/
-├── app/
-│   ├── routers/
-│   │   ├── funcionarios.py
-│   │   ├── ocorrencias.py
-│   │   ├── dashboard.py
-│   │   └── relatorios.py
-│   ├── models.py
-│   └── database.py
-│
-├── static/
-│   ├── css/
-│   └── js/
-│
-├── app/templates/
-│   └── index.html
-│
-├── main.py
-└── requirements.txt
-
----
-
 ## ⚙️ Requisitos
 
 - Python 3.10+
